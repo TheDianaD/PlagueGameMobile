@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Can You Survive the World the Plague Left Behind?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #050914;
+    --bg-text:   #060c18;
+    --text:      #dfe4f0;
+    --dim:       rgba(223,228,240,0.52);
+    --gold:      #c8a44a;
+    --gold-dim:  rgba(200,164,74,0.25);
+    --div:       rgba(255,255,255,0.07);
+    --fd:        'Cormorant Garamond', serif;
+    --fb:        'EB Garamond', serif;
+    --topbar-h:  44px;
+    --stats-h:   50px;
+    --tabs-h:    44px;
+    --mobile-bar-h:  64px;
+    --mobile-tabs-h: 54px;
+    --choices-h: 130px;
+  }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text); font-family: var(--fb);
+  }
+
+  /* ═══════════════════════
+     APP SHELL
+  ═══════════════════════ */
+  #app {
+    display: grid;
+    grid-template-rows: var(--topbar-h) var(--stats-h) 1fr;
+    height: 100vh;
+  }
+
+  /* TOP BAR */
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.4rem;
+    background: rgba(3,5,12,0.98);
+    border-bottom: 1px solid var(--div);
+    z-index: 30;
+  }
+  #topbar-title {
+    font-family: var(--fd); font-size: clamp(0.78rem,1.05vw,0.98rem);
+    font-weight: 600; color: rgba(223,228,240,0.58);
+    letter-spacing: 0.02em; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 65%;
+  }
+  #byline-el {
+    font-size: 0.6rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(223,228,240,0.2);
+  }
+  #topbar-btns { display: flex; }
+  #topbar-btns button {
+    height: var(--topbar-h); padding: 0 1rem;
+    font-family: var(--fb); font-size: 0.67rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(223,228,240,0.3); background: none;
+    border: none; border-left: 1px solid var(--div);
+    cursor: pointer; transition: color 0.13s, background 0.13s;
+  }
+  #topbar-btns button:hover  { color: rgba(223,228,240,0.8); background: rgba(255,255,255,0.03); }
+  #topbar-btns button:disabled { color: rgba(255,255,255,0.1); cursor: default; }
+
+  /* STATS BAR */
+  #stats {
+    display: flex;
+    background: rgba(3,5,12,0.97);
+    border-bottom: 1px solid var(--div);
+  }
+  #stat-season { display: none; }
+  .stat-cell {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; padding: 0 1rem;
+    border-right: 1px solid var(--div); min-width: 0;
+  }
+  .stat-cell:last-child { border-right: none; flex: 1.5; }
+  .stat-label {
+    font-size: 0.52rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: rgba(223,228,240,0.55); line-height: 1;
+  }
+  .stat-val {
+    font-family: var(--fd); font-size: 1.05rem; font-weight: 600;
+    color: var(--text); line-height: 1.15; white-space: nowrap;
+  }
+  #status-value { font-size: 0.88rem; }
+  #season-label { font-family: var(--fb); font-size: 0.75rem; font-style: italic; color: var(--dim); }
+
+  /* ═══════════════════════
+     STAGE
+  ═══════════════════════ */
+  #stage {
+    display: grid;
+    grid-template-columns: 50% 1fr;
+    overflow: hidden;
+  }
+
+  /* LEFT COLUMN */
+  #left-col {
+    position: relative; display: flex; flex-direction: column;
+    overflow: hidden; border-right: 1px solid var(--div);
+    background: var(--bg-text);
+  }
+
+  .outerContainer {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 1.8rem 2.4rem 1.8rem 2.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.06) transparent;
+    will-change: transform; transform: translateZ(0);
+  }
+  .outerContainer::-webkit-scrollbar { width: 3px; }
+  .outerContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); }
+
+  .header { margin-bottom: 1.6rem; }
+  .header.invisible { display: none; }
+  .header h1 {
+    font-family: var(--fd); font-size: clamp(1.2rem,1.6vw,1.65rem);
+    font-weight: 700; line-height: 1.25;
+  }
+  .header::after {
+    content: ''; display: block; margin-top: 1rem; height: 1px;
+    background: linear-gradient(to right, var(--div) 0%, transparent 70%);
+  }
+  .byline { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); margin-top: 0.35rem; }
+
+  #story > p { font-size: 1.18rem; line-height: 1.92; margin-bottom: 0.6rem; }
+  #story > p strong { color: var(--gold); font-weight: 500; font-style: normal; }
+  #story > p em     { color: var(--gold); font-style: italic; }
+  #story > p.section-start::first-letter {
+    font-family: var(--fd); font-size: 3.5em; font-weight: 700;
+    float: left; line-height: 0.82; margin: 0.06em 0.1em 0 0;
+    text-shadow: 0 0 22px rgba(130,165,220,0.5);
+  }
+  .vocab-notice { margin: 0.8rem 0; color: var(--gold); font-family: var(--fd); font-size: 0.9rem; }
+
+  /* SLIDE-UP PANEL OVERLAY */
+  #panel-overlay {
+    position: absolute;
+    inset: 0 0 var(--tabs-h) 0;
+    background: var(--bg-text);
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    overflow-y: auto; z-index: 10;
+    padding: 1.4rem 1.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.06) transparent;
+  }
+  #panel-overlay::-webkit-scrollbar { width: 3px; }
+  #panel-overlay::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); }
+  #panel-overlay.open { clip-path: inset(0 0 0 0); }
+
+  .panel-pane { display: none; }
+  .panel-pane.active { display: block; }
+
+  .panel-heading {
+    font-family: var(--fd); font-size: 1.15rem; font-weight: 600;
+    color: var(--gold); margin-bottom: 1rem; padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--div);
+  }
+
+  /* Journal */
+  .journal-season-header {
+    font-family: var(--fd); font-size: 0.95rem; font-weight: 600;
+    color: var(--gold); margin: 0.85rem 0 0.3rem;
+  }
+  .journal-entry { color: var(--dim); font-style: italic; font-size: 0.95rem; margin-bottom: 0.4rem; line-height: 1.65; }
+  .panel-placeholder { color: rgba(223,228,240,0.18); font-style: italic; font-size: 0.82rem; }
+
+  /* Vocab */
+  .vocab-entry { margin-bottom: 0.65rem; }
+  .vocab-term  { color: var(--gold); font-family: var(--fd); font-weight: 600; font-size: 0.96rem; }
+  .vocab-def   { color: var(--dim); font-size: 0.87rem; line-height: 1.55; }
+
+  /* History */
+  .history-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--div); }
+  .history-year  { font-family: var(--fd); font-size: 0.8rem; color: var(--gold); font-weight: 600; }
+  .history-title { font-weight: 500; font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .history-entry p { color: var(--dim); font-size: 0.86rem; line-height: 1.6; }
+
+  /* Map panel */
+  #panel-map-img { width: 100%; height: auto; display: block; }
+
+  /* LEFT TAB BAR */
+  #left-tabs {
+    flex-shrink: 0; height: var(--tabs-h);
+    display: flex; border-top: 1px solid var(--div);
+    background: rgba(3,5,12,0.95); z-index: 11;
+  }
+  .ltab {
+    flex: 1; border: none; background: none;
+    font-family: var(--fb); font-size: 0.62rem;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(223,228,240,0.28);
+    border-right: 1px solid var(--div);
+    cursor: pointer; transition: color 0.13s, background 0.13s;
+  }
+  .ltab:last-child { border-right: none; }
+  .ltab:hover:not(.active) { color: rgba(223,228,240,0.6); }
+  .ltab.active { color: var(--gold); background: rgba(200,164,74,0.05); border-top: 1px solid var(--gold); }
+
+  /* RIGHT COLUMN */
+  #right-col { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); position: relative; }
+
+  #scene-wrap { flex: 0 0 52%; position: relative; overflow: hidden; background: var(--bg); }
+  #scene-img {
+    width: 100%; height: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;          /* never crops — shows full image */
+    background-color: var(--bg);
+    padding: 14px;                     /* border of breathing room */
+    background-origin: content-box;   /* image stays inside the padding */
+    transition: opacity 0.4s ease;
+  }
+  #scene-img.fading { opacity: 0; }
+  #scene-season-overlay {
+    position: absolute; bottom: 0.6rem; right: 0.8rem;
+    font-family: var(--fd); font-size: 0.76rem; font-style: italic;
+    color: rgba(223,228,240,0.35); pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  }
+
+  /* CHOICES */
+  #choices-container { flex: 1; display: flex; flex-direction: column; min-height: 0; border-top: 2px solid rgba(200,164,74,0.28); background: linear-gradient(180deg, rgba(200,164,74,0.04) 0%, rgba(3,5,12,0.85) 100%); }
+  #choices-label { font-family: var(--fb); font-size: 0.58rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,164,74,0.5); padding: 0.45rem 1rem 0.22rem; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  #hud-choices {
+    flex: 1; overflow-y: auto; padding: 0.2rem 0;
+    display: flex; flex-direction: column;
+    scrollbar-width: thin; scrollbar-color: rgba(200,164,74,0.15) transparent;
+  }
+  #hud-choices::-webkit-scrollbar { display: none; }
+
+  .hud-choice-item {
+    font-family: var(--fb); font-size: 1.08rem;
+    color: rgba(223,228,240,0.75);
+    padding: 0.36rem 1rem 0.36rem 0.8rem;
+    cursor: pointer; width: 100%;
+    border-left: 2px solid transparent;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+    display: flex; align-items: baseline; gap: 0.4rem;
+  }
+  .hud-choice-item::before { content: '›'; color: var(--gold-dim); transition: color 0.12s; }
+  .hud-choice-item:hover { color: var(--text); border-left-color: var(--gold); background: rgba(200,164,74,0.05); }
+  .hud-choice-item:hover::before { color: var(--gold); }
+  .hud-choice-item.disabled { color: rgba(223,228,240,0.2); cursor: default; font-style: italic; }
+  .hud-no-choices {
+    color: rgba(223,228,240,0.18); font-style: italic;
+    font-size: 0.88rem; padding: 0.45rem 1rem;
+    font-family: var(--fb); width: 100%; text-align: center; align-self: center;
+  }
+
+  /* STAT DELTA */
+  /* STAT DELTA — centered, above tabs */
+  #stat-delta {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--tabs-h) + 0.8rem);
+    background: rgba(6,10,22,0.97);
+    border: 1px solid rgba(200,164,74,0.35);
+    border-radius: 3px;
+    padding: 0.5rem 1.2rem;
+    display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 200;
+    max-width: 400px;
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  #stat-delta.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #stat-delta.fading  { opacity: 0; transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.6s ease, transform 0.5s ease; }
+  .delta-item { font-family: var(--fb); font-size: 0.88rem; white-space: nowrap; }
+  .delta-item.pos { color: #7ec97e; }
+  .delta-item.neg { color: #d47070; }
+  .delta-item.neu { color: rgba(223,228,240,0.45); }
+  
+  .hud-choice-item.first-choice {
+    color: var(--text);
+    border-left: 2px solid rgba(200,164,74,0.7);
+    animation: choicePulse 2.2s ease-in-out infinite;
+  }
+  .hud-choice-item.first-choice::before { color: var(--gold); }
+  @keyframes choicePulse {
+    0%, 100% { background: rgba(200,164,74,0.03); }
+    50%       { background: rgba(200,164,74,0.09); box-shadow: inset 3px 0 14px -5px rgba(200,164,74,0.25); }
+  }
+  
+  /* ═══════════════════════════════════════════════════
+     MOBILE LAYOUT  (≤ 640 px)
+  ═══════════════════════════════════════════════════ */
+
+  /* Hide mobile-only elements on desktop */
+  #mobile-bar      { display: none; }
+  #mobile-tabs-bar { display: none; }
+
+  @media (max-width: 640px) {
+
+    html, body {
+      height: auto !important;
+      overflow: visible !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+    }
+    /* Kill the grid entirely on mobile — just a normal block */
+    #app {
+      display: block !important;
+      height: auto !important;
+      padding-top: var(--stats-h);  /* space for fixed stats bar */
+    }
+    #stats {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+    }
+    #topbar    { display: none; }
+    #left-tabs { display: none; }
+    #stage     { display: block; overflow: visible; }
+
+    #left-col  { display: block; overflow: visible; border-right: none; }
+    .outerContainer {
+      overflow: visible !important;
+      height: auto !important;
+      padding: 1.2rem 1.4rem;
+      padding-bottom: calc(var(--mobile-bar-h) + var(--mobile-tabs-h) + 3rem) !important;
+    }
+    #story > p { font-size: 1.28rem; line-height: 1.9; }
+
+    #right-col  {
+      display: block; position: relative;
+      /* Bottom padding so last choice clears the fixed mobile bar */
+      padding-bottom: calc(var(--mobile-bar-h) + 1.5rem);
+    }
+    #scene-wrap { display: none; }
+    #choices-container { max-height: none; border-top: 2px solid rgba(200,164,74,0.28); }
+    #hud-choices { max-height: none; overflow: visible; }
+    #choices-label { font-size: 0.7rem; }
+    .hud-choice-item { font-size: 1.15rem; padding: 0.6rem 1rem 0.6rem 0.9rem; }
+
+    .stat-cell  { padding: 0.4rem 0.5rem; }
+    .stat-val   { font-size: 0.9rem; }
+    .stat-label { font-size: 0.46rem; }
+
+    /* Panel overlay: full screen, show/hide via display (no clip-path on mobile) */
+    #panel-overlay {
+      display: none !important;
+      clip-path: none !important;
+      transform: none !important;
+      position: fixed !important;
+      top:    var(--stats-h) !important;
+      left: 0 !important; right: 0 !important;
+      /* Sits above both the tabs bar and bottom bar when both visible */
+      bottom: calc(var(--mobile-bar-h) + var(--mobile-tabs-h) + env(safe-area-inset-bottom, 0px)) !important;
+      padding: 1.6rem 1.4rem !important;
+      z-index: 300 !important;
+      overflow-y: auto !important;
+    }
+    #panel-overlay.open {
+      display: block !important;
+    }
+
+    /* Stat delta: slides down from top */
+    #stat-delta {
+      top: 0 !important; bottom: auto !important;
+      left: 0 !important; right: 0 !important;
+      max-width: 100% !important;
+      border-radius: 0 0 4px 4px !important;
+      border-top: none !important;
+      justify-content: center !important;
+      padding: 0.65rem 1rem !important;
+      z-index: 500 !important;
+      transform: translateY(-100%) !important;
+      transition: opacity 0.2s ease, transform 0.25s ease !important;
+    }
+    #stat-delta.visible { opacity: 1 !important; transform: translateY(0) !important; }
+    #stat-delta.fading  {
+      opacity: 0 !important; transform: translateY(-100%) !important;
+      transition: opacity 0.45s ease, transform 0.45s ease !important;
+    }
+
+    /* Mobile bottom bar */
+    #mobile-bar {
+      display: flex !important;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--mobile-bar-h);
+      background: rgba(3,5,12,0.98);
+      border-top: 1px solid var(--div);
+      z-index: 9000;
+    }
+    #mobile-reset, #mobile-hamburger {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.18rem; background: none; border: none; cursor: pointer;
+    }
+    #mobile-reset { border-right: 1px solid var(--div); }
+    .mob-icon  { font-size: 1.5rem; line-height: 1; }
+    .mob-label {
+      font-family: var(--fb); font-size: 0.58rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: rgba(223,228,240,0.45);
+    }
+    #mobile-reset .mob-icon  { color: rgba(200,164,74,0.85); }
+    #mobile-reset .mob-label { color: rgba(200,164,74,0.55); }
+    #mobile-hamburger .mob-icon { color: rgba(223,228,240,0.75); }
+
+    /* Mobile tabs bar: hidden above mobile bar by default */
+    #mobile-tabs-bar {
+      display: flex !important;
+      position: fixed;
+      bottom: calc(0px - var(--mobile-tabs-h));
+      left: 0; right: 0;
+      height: var(--mobile-tabs-h);
+      background: rgba(6,8,18,0.98);
+      border-top: 2px solid rgba(200,164,74,0.3);
+      z-index: 8999;
+      overflow-x: auto; overflow-y: hidden;
+      scrollbar-width: none;
+      transition: bottom 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #mobile-tabs-bar::-webkit-scrollbar { display: none; }
+    #mobile-tabs-bar.open {
+      bottom: var(--mobile-bar-h);
+    }
+    .mtab {
+      flex: 1;              /* equal width, fills the bar */
+      min-width: 0;
+      padding: 0 0.5rem;
+      height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      white-space: nowrap; border: none;
+      border-right: 1px solid var(--div); background: none;
+      font-family: var(--fb); font-size: 0.72rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(223,228,240,0.55); cursor: pointer;
+    }
+    .mtab:last-child { border-right: none; }
+    .mtab.active {
+      color: var(--gold); background: rgba(200,164,74,0.07);
+      border-top: 2px solid var(--gold);
+    }
+  }
+
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div id="topbar-title">Can You Survive the World the Plague Left Behind?</div>
+    <div id="byline-el"></div>
+    <div id="topbar-btns">
+      <button id="rewind" style="color:rgba(200,164,74,0.9);border:1px solid rgba(200,164,74,0.4);border-radius:2px;margin-right:0.4rem;">↺ Restart</button>
+    </div>
+  </header>
+
+  <div id="stats">
+    <div class="stat-cell"><span class="stat-label">Status</span><span class="stat-val" id="status-value">Villein</span></div>
+    <div class="stat-cell"><span class="stat-label">Coin</span><span class="stat-val" id="money-value">—</span></div>
+    <div class="stat-cell"><span class="stat-label">Grain</span><span class="stat-val" id="grain-value">—</span></div>
+    <div class="stat-cell"><span class="stat-label">Stock</span><span class="stat-val" id="livestock-value">—</span></div>
+    <div class="stat-cell"><span class="stat-label">Health</span><span class="stat-val" id="health-value">—</span></div>
+    <div class="stat-cell"><span class="stat-label">Rep</span><span class="stat-val" id="reputation-value">—</span></div>
+
+  <span id="season-label" style="display:none">Essex, 1351</span>
+  </div>
+
+  <div id="stage">
+
+    <!-- LEFT: story + overlay panels + tabs -->
+    <div id="left-col">
+
+      <div class="outerContainer">
+        <div id="story">
+          <div class="header">
+            <h1>Can You Survive the World the Plague Left Behind?</h1>
+            <div class="byline"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: image + choices -->
+    <div id="right-col">
+      <div id="scene-wrap">
+        <div id="scene-img" style="background-image:url('start_map.webp')"></div>
+        <div id="scene-season-overlay"></div>
+      </div>
+      <div id="choices-container">
+        <div id="choices-label">What do you do?</div>
+        <div id="hud-choices">
+          <span class="hud-no-choices">— reading —</span>
+        </div>
+      </div>
+      <div id="panel-overlay">
+        <div id="panel-journal" class="panel-pane active">
+          <div class="panel-heading">Your Journal</div>
+          <div id="journal-entries"><p class="panel-placeholder">Choices recorded as you play.</p></div>
+        </div>
+        <div id="panel-vocab" class="panel-pane">
+          <div class="panel-heading">Medieval Terms</div>
+          <div id="vocab-list"><p class="panel-placeholder">Terms unlock as you progress.</p></div>
+        </div>
+        <div id="panel-history" class="panel-pane">
+          <div class="panel-heading">Historical Context</div>
+          <div class="history-entry"><div class="history-year">1315–1322</div><div class="history-title">The Great Famine</div><p>Relentless rain rotted crops across northern Europe for seven years. Grain prices tripled. An estimated 10–25% of some regions starved — weakening bodies for what came next.</p></div>
+          <div class="history-entry"><div class="history-year">1348–1351</div><div class="history-title">The Black Death</div><p>Plague reached England via Bristol in 1348 and killed 30–60% of the population within three years. No rank offered protection.</p></div>
+          <div class="history-entry"><div class="history-year">1351</div><div class="history-title">The Statute of Labourers</div><p>Parliament tried to freeze wages at pre-plague levels. Widely ignored — but still carried real legal risk. Enforcement depended entirely on your lord.</p></div>
+          <div class="history-entry"><div class="history-year">1350s</div><div class="history-title">The Agricultural Shift</div><p>Labour shortages drove many manors from arable farming toward livestock. Sheep farming expanded dramatically in Essex. Not ideology — survival arithmetic.</p></div>
+          <div class="history-entry"><div class="history-year">1350s–60s</div><div class="history-title">The Breakdown of Villeinage</div><p>Peasants began moving between manors for better wages. Desperate lords quietly ignored the rules. The legal fiction of serfdom was losing to the labour market.</p></div>
+          <div class="history-entry"><div class="history-year">1381</div><div class="history-title">The Peasants' Revolt</div><p>Thirty years of resentment boiled over. Peasants from Essex and Kent marched on London, briefly occupied the Tower. The revolt failed — but accelerated the legal end of serfdom.</p></div>
+          <div class="history-entry"><div class="history-year">Context</div><div class="history-title">What Reputation Meant</div><p>In a manor community, reputation determined whether the bailiff trusted you, whether neighbours loaned tools in a crisis, whether accusations would be believed in court.</p></div>
+        </div>
+        <div id="panel-map" class="panel-pane">
+          <div class="panel-heading">Colchester, 1350</div>
+          <img id="panel-map-img" src="start_map.webp" alt="Map of Colchester 1350" style="width:100%;height:auto;display:block;">
+        </div>
+      </div>
+
+      <div id="left-tabs">
+        <button class="ltab" data-panel="journal">Journal</button>
+        <button class="ltab" data-panel="vocab">Vocab</button>
+        <button class="ltab" data-panel="history">History</button>
+        <button class="ltab" data-panel="map">Map</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div id="mobile-bar">
+  <button id="mobile-reset" onclick="(function(){var r=document.getElementById('rewind');if(r)r.click();})()">
+    <span class="mob-icon">↺</span>
+    <span class="mob-label">Restart</span>
+  </button>
+  <button id="mobile-hamburger" onclick="(function(){var t=document.getElementById('mobile-tabs-bar');t.classList.toggle('open');})()">
+    <span class="mob-icon">☰</span>
+    <span class="mob-label">Tabs</span>
+  </button>
+</div>
+<div id="mobile-tabs-bar">
+  <button class="mtab" onclick="mobileTab('journal',this)">Journal</button>
+  <button class="mtab" onclick="mobileTab('vocab',this)">Vocab</button>
+  <button class="mtab" onclick="mobileTab('history',this)">History</button>
+  <button class="mtab" onclick="mobileTab('map',this)">Map</button>
+</div>
+
+<div id="stat-delta"></div>
+
+<script>
+(function () {
+  'use strict';
+  const IMGS = {
+    start_map:           'start_map.webp',
+    start_interior:      'start_interior.webp',
+    grave:               'grave.webp',
+    level_1_default:     'level_1_default.webp',
+    level_1_winter:      'level_1_winter.webp',
+    level_2_default:     'level_2_default.webp',
+    level_2_winter:      'level_2_winter.webp',
+    level_3_default:     'level_3_default.webp',
+    level_3_ale:         'level_3_ale.webp',
+    level_3_winter:  'level_3_winter.webp',
+    l_winter_ale:        'l_winter_ale.webp',
+  };
+
+  // sceneState.imageFile is set by main.js when it processes
+  // ~ image = "..." assignments from the ink variable.
+  // Dead and special overrides take priority.
+  window.sceneState = {
+    imageFile: 'start_map.webp',
+    isDead: false,
+  };
+
+  let _curKey = null, _pendingKey = null, _fadeTimer = null;
+
+  window.updateScene = function() {
+    var s = window.sceneState;
+    var file = s.isDead ? 'grave.webp' : (s.imageFile || 'start_map.webp');
+    var key  = file.replace(/\.(webp|gif)$/i, '').toLowerCase();
+    var src  = IMGS[key] || file;
+
+    if (src === _curKey || src === _pendingKey) return;
+    _pendingKey = src;
+
+    var el = document.getElementById('scene-img');
+    if (!el) return;
+
+    el.classList.add('fading');
+    if (_fadeTimer) clearTimeout(_fadeTimer);
+    _fadeTimer = setTimeout(function() {
+      el.style.backgroundImage = "url('" + src + "')";
+      el.classList.remove('fading');
+      _curKey = src;
+      _pendingKey = null;
+    }, 220);
+
+    var overlay = document.getElementById('scene-season-overlay');
+    var seasonEl = document.getElementById('season-label');
+    if (overlay && seasonEl) {
+      var t = seasonEl.textContent;
+      overlay.textContent = (t && t !== 'Essex, 1351') ? t : '';
+    }
+  };
+
+  window.updateScene();
+})();
+</script>
+
+<script>
+(function() {
+  var overlay = document.getElementById('panel-overlay');
+  document.querySelectorAll('.ltab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = btn.dataset.panel;
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        overlay.classList.remove('open');
+        return;
+      }
+      document.querySelectorAll('.ltab').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.panel-pane').forEach(function(p) { p.classList.remove('active'); });
+      var pane = document.getElementById('panel-' + target);
+      if (pane) pane.classList.add('active');
+      overlay.classList.add('open');
+    });
+  });
+})();
+</script>
+
+<script>
+(function() {
+  ['money-value','grain-value','livestock-value','health-value','reputation-value'].forEach(function(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var prev = el.textContent;
+    new MutationObserver(function() {
+      if (el.textContent !== prev) {
+        prev = el.textContent;
+        el.style.transition = '';
+        el.style.color = 'var(--gold)';
+        setTimeout(function() { el.style.transition = 'color 1.1s ease'; el.style.color = ''; }, 50);
+      }
+    }).observe(el, { childList:true, characterData:true, subtree:true });
+  });
+})();
+</script>
+
+<script src="ink.js"></script>
+<script src="Plague.js"></script>
+<script src="main.js"></script>
+<script>
+  // Global mobile tab handler — must be in its own script tag (src= tags ignore inline code)
+  window.mobileTab = function(panel, btn) {
+    var overlay = document.getElementById('panel-overlay');
+    var tabsBar = document.getElementById('mobile-tabs-bar');
+    var isActive = btn.classList.contains('active');
+    document.querySelectorAll('.mtab, .ltab').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.panel-pane').forEach(function(p){ p.classList.remove('active'); });
+    if (isActive) {
+      // Tapping active tab closes panel AND hides tabs bar
+      overlay.classList.remove('open');
+      tabsBar.classList.remove('open');
+      return;
+    }
+    // Tapping a tab: keep tabs bar visible so user can switch/close
+    btn.classList.add('active');
+    document.querySelectorAll('.ltab[data-panel="'+panel+'"]').forEach(function(b){ b.classList.add('active'); });
+    var pane = document.getElementById('panel-' + panel);
+    if (pane) pane.classList.add('active');
+    overlay.classList.add('open');
+    tabsBar.classList.add('open');  // keep visible
+  };
+</script>
+</body>
+</html>
